@@ -96,7 +96,7 @@ float      dataFloat[10];
 int8_t     dataInteger[10];
 bool       stateSendSholat = false; 
 bool       stateBuzzWar    = 0;
-//bool       counterName     = 1;
+bool       butuhHitungJadwal = true; // Set true agar dihitung saat pertama kali alat menyala
 bool       DoSwap          = false;
 bool       panelState = false; // false = OFF, true = ON
 
@@ -456,6 +456,7 @@ void getData(const char* data) {
 
       Rtc.SetDateTime(RtcDateTime(tahun, bulan, tanggal, jam, menit, detik));
       stateSendSholat = 1;
+      butuhHitungJadwal = true;
     } 
     
     else if (key_len == 4 && strncmp(data, "text", 4) == 0) {
@@ -533,17 +534,21 @@ void getData(const char* data) {
     else if (key_len == 2 && strncmp(data, "Lt", 2) == 0) {
       config.latitude = roundf(atof(ptr) * 1000000.0) / 1000000.0;
       saveFloatToEEPROM(ADDR_LATITUDE, config.latitude);
+      butuhHitungJadwal = true;
     } else if (key_len == 2 && strncmp(data, "Lo", 2) == 0) {
       config.longitude = roundf(atof(ptr) * 1000000.0) / 1000000.0;
       saveFloatToEEPROM(ADDR_LONGITUDE, config.longitude);
+      butuhHitungJadwal = true;
     } 
     
     else if (key_len == 2 && strncmp(data, "Tz", 2) == 0) {
       config.zonawaktu = atoi(ptr);
       saveIntToEEPROM(ADDR_TZ, config.zonawaktu);
+      butuhHitungJadwal = true;
     } else if (key_len == 2 && strncmp(data, "Al", 2) == 0) {
       config.altitude = atoi(ptr);
       saveIntToEEPROM(ADDR_ALTITUDE, config.altitude);
+      butuhHitungJadwal = true;
     } 
     
     // Bagian Index dengan pemisah '-'
@@ -565,6 +570,7 @@ void getData(const char* data) {
       uint8_t indexKoreksi = atoi(ptr);
       dataIhty[indexSholat] = indexKoreksi;
       EEPROM.write(ADDR_IHTY + indexSholat, indexKoreksi);
+      butuhHitungJadwal = true;
     } 
     
     else if (key_len == 2 && strncmp(data, "Da", 2) == 0) {
@@ -575,6 +581,7 @@ void getData(const char* data) {
       config.Correction = atoi(ptr);
       EEPROM.write(ADDR_CORRECTION, config.Correction & 0xFF);
       EEPROM.write(ADDR_CORRECTION + 1, (config.Correction >> 8) & 0xFF);
+      butuhHitungJadwal = true;
     } 
     
     else if (key_len == 3 && strncmp(data, "Bzr", 3) == 0) {
@@ -1144,7 +1151,7 @@ Serial.println(password);
  //----------------------------------------------------------------------
 // I2C_ClearBus menghindari gagal baca RTC (nilai 00 atau 165)
 
-int I2C_ClearBus() {
+uint8_t I2C_ClearBus() {
   
 #if defined(TWCR) && defined(TWEN)
   TWCR &= ~(_BV(TWEN)); //Disable the Atmel 2-Wire interface so we can control the SDA and SCL pins directly
@@ -1165,7 +1172,7 @@ int I2C_ClearBus() {
   }
 
   boolean SDA_LOW = (digitalRead(SDA) == LOW);  // vi. Check SDA input.
-  int clockCount = 20; // > 2x9 clock
+  uint8_t clockCount = 20; // > 2x9 clock
 
   while (SDA_LOW && (clockCount > 0)) { //  vii. If SDA is Low,
     clockCount--;
@@ -1179,7 +1186,7 @@ int I2C_ClearBus() {
     delayMicroseconds(10); //  for >5uS
     // The >5uS is so that even the slowest I2C devices are handled.
     SCL_LOW = (digitalRead(SCL) == LOW); // Check if SCL is Low.
-    int counter = 20;
+    uint8_t counter = 20;
     while (SCL_LOW && (counter > 0)) {  //  loop waiting for SCL to become High only wait 2sec.
       counter--;
       delay(100);
@@ -1208,7 +1215,7 @@ int I2C_ClearBus() {
   return 0; // all ok
 }
 
-void buzzerWarning(int cek){
+void buzzerWarning(uint8_t cek){
 
    static bool state = false;
    static uint32_t save = 0;

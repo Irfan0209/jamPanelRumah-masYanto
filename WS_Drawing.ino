@@ -474,14 +474,13 @@ void blinkBlock()
 //===================================== end =================================//
 
 
-
-void dwCtr(int x, int y, String Msg){
+void dwCtr(int8_t x, int8_t y, const char* Msg){
    uint16_t   tw = Disp.textWidth(Msg);
-   uint16_t   c = int((DWidth-x-tw)/2);
+   int16_t   c = int16_t((DWidth-x-tw)/2);
    Disp.drawText(x+c,y,Msg);
 }
   
-void fType(int x)
+void fType(int8_t x)
   {
     if(x==0) Disp.setFont(Font0);
     else if(x==1) Disp.setFont(Font1); 
